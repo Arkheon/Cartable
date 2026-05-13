@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Division euclidienne — CM1 — Mon Cartable</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/css/shared.css">
+<style>
+  :root { --subject: #2563eb; --subject-dark: #1e40af; }
+
+  body { display: flex; flex-direction: column; gap: 16px; }
+
+  .topbar { display: flex; align-items: center; }
+  .progress-wrap { flex: 1; background: #e5e7eb; border-radius: 99px; height: 8px; overflow: hidden; margin: 0 12px; }
+  .progress-fill { background: var(--subject); height: 100%; border-radius: 99px; width: 0%; transition: width 0.4s ease; }
+  .progress-text { font-size: 15px; font-weight: 600; color: var(--muted); min-width: 48px; text-align: right; }
+
+  /* Carte question */
+  .question-card {
+    background: white;
+    border-radius: 24px;
+    padding: 28px 16px 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .div-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .div-num { font-size: 48px; font-weight: 700; color: var(--subject); line-height: 1; }
+  .div-op  { font-size: 36px; font-weight: 600; color: #9ca3af; line-height: 1; }
+  .div-label { font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+
+  /* Champs de saisie */
+  .inputs-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .div-input {
+    width: 80px;
+    height: 64px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--text);
+    text-align: center;
+    border: 3px solid #e5e7eb;
+    border-radius: 14px;
+    background: #f9fafb;
+    outline: none;
+    transition: border-color 0.15s;
+    -moz-appearance: textfield;
+  }
+  .div-input::-webkit-inner-spin-button,
+  .div-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .div-input:focus { border-color: var(--subject); background: white; }
+  .div-input.correct { border-color: #16a34a; background: #dcfce7; color: #14532d; }
+  .div-input.wrong   { border-color: #dc2626; background: #fee2e2; color: #991b1b; }
+
+  /* Affichage de la correction */
+  .correction {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--muted);
+    text-align: center;
+    min-height: 20px;
+  }
+
+  /* Boutons */
+  .btn-check {
+    background: var(--subject);
+    box-shadow: 0 4px 0 var(--subject-dark);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 18px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .btn-check:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--subject-dark); }
+
+  .btn-next {
+    background: var(--subject);
+    box-shadow: 0 4px 0 var(--subject-dark);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 18px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .btn-next:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--subject-dark); }
+  .btn-next.hidden { display: none; }
+
+  /* Résumé */
+  .summary { display: none; flex-direction: column; align-items: center; gap: 20px; text-align: center; padding: 24px 0; }
+  .summary.visible { display: flex; }
+  .summary-icon  { font-size: 72px; line-height: 1; }
+  .summary-title { font-size: 26px; font-weight: 700; color: var(--text); }
+  .summary-sub   { font-size: 16px; color: var(--muted); margin-top: -10px; }
+  .btn-restart   { border: none; border-radius: 16px; padding: 18px; font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700; color: white; cursor: pointer; background: var(--subject); box-shadow: 0 4px 0 var(--subject-dark); transition: transform 0.1s, box-shadow 0.1s; width: 100%; }
+  .btn-restart:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--subject-dark); }
+
+  @media (min-width: 600px) { .div-num { font-size: 60px; } .div-input { width: 96px; height: 72px; font-size: 44px; } }
+</style>
+</head>
+<body>
+
+<div id="game">
+  <div class="topbar">
+    <a href="../index.html" class="back-link">← Retour</a>
+    <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="progress-text" id="progressText"></span>
+  </div>
+
+  <div class="question-card">
+    <div class="div-row">
+      <span class="div-num" id="dividend"></span>
+      <span class="div-op">÷</span>
+      <span class="div-num" id="divisor"></span>
+      <span class="div-op">=</span>
+    </div>
+    <div class="inputs-row">
+      <div class="input-group">
+        <input type="number" class="div-input" id="inputQ" inputmode="numeric" placeholder="?" min="0" max="99">
+        <span class="div-label">quotient</span>
+      </div>
+      <span class="div-op" style="padding-bottom:18px">reste</span>
+      <div class="input-group">
+        <input type="number" class="div-input" id="inputR" inputmode="numeric" placeholder="?" min="0" max="9">
+        <span class="div-label">reste</span>
+      </div>
+    </div>
+    <div class="correction" id="correction"></div>
+  </div>
+
+  <button class="btn-check" id="btnCheck">Vérifier</button>
+  <button class="btn-next hidden" id="btnNext">Question suivante →</button>
+</div>
+
+<div class="summary" id="summary">
+  <div class="summary-icon"  id="sumIcon"></div>
+  <div class="summary-title" id="sumTitle"></div>
+  <div class="summary-sub"   id="sumSub"></div>
+  <button class="btn-restart" id="btnRestart">Recommencer</button>
+</div>
+
+<script>
+  const TOTAL = 10;
+  let questions = [], idx = 0, score = 0, checked = false;
+
+  const inputQ     = document.getElementById('inputQ');
+  const inputR     = document.getElementById('inputR');
+  const dividend   = document.getElementById('dividend');
+  const divisor    = document.getElementById('divisor');
+  const correction = document.getElementById('correction');
+  const progFill   = document.getElementById('progressFill');
+  const progText   = document.getElementById('progressText');
+  const btnCheck   = document.getElementById('btnCheck');
+  const btnNext    = document.getElementById('btnNext');
+  const gameDiv    = document.getElementById('game');
+  const summaryDiv = document.getElementById('summary');
+
+  function genQuestion() {
+    const b = 2 + Math.floor(Math.random() * 8);       // divisor 2-9
+    const q = 1 + Math.floor(Math.random() * 9);        // quotient 1-9
+    const r = Math.floor(Math.random() * b);             // remainder 0 to b-1
+    return { a: q * b + r, b, q, r };
+  }
+
+  function buildDeck() {
+    const deck = [];
+    for (let i = 0; i < TOTAL; i++) deck.push(genQuestion());
+    return deck;
+  }
+
+  function showQuestion() {
+    checked = false;
+    const q = questions[idx];
+    dividend.textContent = q.a;
+    divisor.textContent  = q.b;
+    inputQ.value = '';
+    inputR.value = '';
+    inputQ.className = 'div-input';
+    inputR.className = 'div-input';
+    correction.textContent = '';
+    btnCheck.style.display = '';
+    btnNext.classList.add('hidden');
+    progText.textContent = `${idx + 1} / ${TOTAL}`;
+    progFill.style.width = `${(idx / TOTAL) * 100}%`;
+    inputQ.focus();
+  }
+
+  function check() {
+    if (checked) return;
+    const q = questions[idx];
+    const userQ = parseInt(inputQ.value, 10);
+    const userR = parseInt(inputR.value, 10);
+    if (isNaN(userQ) || isNaN(userR)) return;
+    checked = true;
+
+    const okQ = userQ === q.q;
+    const okR = userR === q.r;
+    inputQ.className = 'div-input ' + (okQ ? 'correct' : 'wrong');
+    inputR.className = 'div-input ' + (okR ? 'correct' : 'wrong');
+
+    if (okQ && okR) {
+      score++;
+      correction.textContent = '✓ Bravo !';
+    } else {
+      correction.textContent = `Réponse : ${q.a} ÷ ${q.b} = ${q.q} reste ${q.r}`;
+    }
+
+    btnCheck.style.display = 'none';
+    const isLast = idx === TOTAL - 1;
+    btnNext.textContent = isLast ? 'Voir mon score' : 'Question suivante →';
+    btnNext.classList.remove('hidden');
+  }
+
+  btnCheck.addEventListener('click', check);
+  // Valider avec Entrée depuis un input
+  [inputQ, inputR].forEach(inp => inp.addEventListener('keydown', e => { if (e.key === 'Enter') check(); }));
+  // Passer automatiquement au reste quand le quotient est renseigné
+  inputQ.addEventListener('input', () => { if (inputQ.value.length >= 2) inputR.focus(); });
+
+  btnNext.addEventListener('click', () => {
+    idx++;
+    if (idx >= TOTAL) showSummary(); else showQuestion();
+  });
+
+  function showSummary() {
+    progFill.style.width = '100%';
+    gameDiv.style.display = 'none';
+    summaryDiv.classList.add('visible');
+    const pct = score / TOTAL;
+    const tier = pct === 1 ? 4 : pct >= 0.8 ? 3 : pct >= 0.6 ? 2 : pct >= 0.4 ? 1 : 0;
+    const icons  = ['💪','👍','⭐⭐','⭐⭐⭐','🎉'];
+    const titles = ['Continue !','Pas mal !','Bien !','Très bien !','Parfait !'];
+    document.getElementById('sumIcon').textContent  = icons[tier];
+    document.getElementById('sumTitle').textContent = titles[tier];
+    document.getElementById('sumSub').textContent   = `${score} / ${TOTAL} divisions correctes`;
+  }
+
+  document.getElementById('btnRestart').addEventListener('click', () => {
+    questions = buildDeck(); idx = 0; score = 0;
+    gameDiv.style.display = '';
+    summaryDiv.classList.remove('visible');
+    showQuestion();
+  });
+
+  // Démarrage
+  questions = buildDeck();
+  showQuestion();
+</script>
+</body>
+</html>

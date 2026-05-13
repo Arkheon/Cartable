@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Fractions — CM1 — Mon Cartable</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/css/shared.css">
+<style>
+  :root { --subject: #2563eb; --subject-dark: #1e40af; }
+
+  body { display: flex; flex-direction: column; gap: 16px; }
+
+  .topbar { display: flex; align-items: center; }
+  .progress-wrap { flex: 1; background: #e5e7eb; border-radius: 99px; height: 8px; overflow: hidden; margin: 0 12px; }
+  .progress-fill { background: var(--subject); height: 100%; border-radius: 99px; width: 0%; transition: width 0.4s ease; }
+  .progress-text { font-size: 15px; font-weight: 600; color: var(--muted); min-width: 48px; text-align: right; }
+
+  /* Carte question */
+  .question-card {
+    background: white;
+    border-radius: 24px;
+    padding: 24px 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    min-height: 180px;
+    justify-content: center;
+  }
+
+  .q-label { font-size: 15px; font-weight: 600; color: var(--muted); }
+
+  /* Cercle SVG */
+  .frac-circle {
+    width: 140px;
+    height: 140px;
+  }
+
+  /* Fraction en texte (grande) */
+  .frac-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    gap: 0;
+  }
+  .frac-text .num { font-size: 52px; font-weight: 700; color: var(--subject); }
+  .frac-text .bar { width: 48px; height: 4px; background: #1f2937; border-radius: 2px; margin: 4px 0; }
+  .frac-text .den { font-size: 52px; font-weight: 700; color: var(--text); }
+
+  /* Grille de choix */
+  .choices-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* Choix texte (fraction écrite) */
+  .choice-btn {
+    background: var(--subject);
+    box-shadow: 0 4px 0 var(--subject-dark);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 16px 8px;
+    font-family: 'Fredoka', sans-serif;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 80px;
+  }
+  .choice-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--subject-dark); }
+  .choice-btn[disabled] { cursor: default; }
+  .choice-btn.correct { background: #16a34a; box-shadow: 0 4px 0 #14532d; }
+  .choice-btn.wrong   { background: #dc2626; box-shadow: 0 4px 0 #991b1b; }
+
+  /* Fraction dans un bouton (texte blanc) */
+  .choice-btn .frac-mini {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+  }
+  .choice-btn .frac-mini .num { font-size: 26px; font-weight: 700; }
+  .choice-btn .frac-mini .bar { width: 28px; height: 3px; background: white; border-radius: 2px; margin: 3px 0; }
+  .choice-btn .frac-mini .den { font-size: 26px; font-weight: 700; }
+
+  /* Cercle SVG petit dans un bouton */
+  .choice-btn svg { width: 64px; height: 64px; }
+
+  /* Bouton suivant */
+  .btn-next { background: var(--subject); box-shadow: 0 4px 0 var(--subject-dark); color: white; border: none; border-radius: 16px; padding: 18px; font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700; cursor: pointer; width: 100%; transition: transform 0.1s, box-shadow 0.1s; }
+  .btn-next:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--subject-dark); }
+  .btn-next.hidden { display: none; }
+
+  /* Résumé */
+  .summary { display: none; flex-direction: column; align-items: center; gap: 20px; text-align: center; padding: 24px 0; }
+  .summary.visible { display: flex; }
+  .summary-icon  { font-size: 72px; line-height: 1; }
+  .summary-title { font-size: 26px; font-weight: 700; color: var(--text); }
+  .summary-sub   { font-size: 16px; color: var(--muted); margin-top: -10px; }
+  .btn-restart   { border: none; border-radius: 16px; padding: 18px; font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700; color: white; cursor: pointer; background: var(--subject); box-shadow: 0 4px 0 var(--subject-dark); transition: transform 0.1s, box-shadow 0.1s; width: 100%; }
+  .btn-restart:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--subject-dark); }
+</style>
+</head>
+<body>
+
+<div id="game">
+  <div class="topbar">
+    <a href="../index.html" class="back-link">← Retour</a>
+    <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="progress-text" id="progressText"></span>
+  </div>
+
+  <div class="question-card" id="questionCard">
+    <p class="q-label" id="qLabel"></p>
+    <div id="qVisual"></div>
+  </div>
+
+  <div class="choices-grid" id="choicesGrid"></div>
+
+  <button class="btn-next hidden" id="btnNext">Question suivante →</button>
+</div>
+
+<div class="summary" id="summary">
+  <div class="summary-icon"  id="sumIcon"></div>
+  <div class="summary-title" id="sumTitle"></div>
+  <div class="summary-sub"   id="sumSub"></div>
+  <button class="btn-restart" id="btnRestart">Recommencer</button>
+</div>
+
+<script>
+  const FRACTIONS = [
+    [1,2],[1,3],[2,3],[1,4],[3,4],[1,5],[2,5],[3,5],[4,5],[1,6],[5,6]
+  ];
+  const TOTAL = 12;
+
+  // Dessine un camembert SVG [num/den] coloré dans [color], gris sinon
+  function pieSVG(num, den, color, size = 100) {
+    const cx = 50, cy = 50, r = 44;
+    let paths = '';
+    for (let i = 0; i < den; i++) {
+      const a1 = -Math.PI/2 + (2*Math.PI * i) / den;
+      const a2 = -Math.PI/2 + (2*Math.PI * (i+1)) / den;
+      const x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+      const x2 = cx + r * Math.cos(a2), y2 = cy + r * Math.sin(a2);
+      // largeArcFlag = 1 if slice > 180° (only if den=1, impossible here)
+      const la = 0;
+      const fill = i < num ? color : '#e5e7eb';
+      paths += `<path d="M${cx},${cy} L${x1.toFixed(2)},${y1.toFixed(2)} A${r},${r} 0 ${la},1 ${x2.toFixed(2)},${y2.toFixed(2)} Z" fill="${fill}" stroke="white" stroke-width="2.5"/>`;
+    }
+    return `<svg viewBox="0 0 100 100" style="width:${size}px;height:${size}px">${paths}</svg>`;
+  }
+
+  function fracLabel(num, den) {
+    return `<span class="frac-mini"><span class="num">${num}</span><span class="bar"></span><span class="den">${den}</span></span>`;
+  }
+
+  function shuffle(arr) {
+    const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a;
+  }
+
+  function buildDeck() {
+    const pool = shuffle([...FRACTIONS]);
+    const deck = [];
+    for (let i = 0; i < TOTAL; i++) {
+      const frac = pool[i % pool.length];
+      // Alterner : visuel → texte (pair) et texte → visuel (impair)
+      deck.push(buildQuestion(frac, i % 2 === 0 ? 'visual-to-text' : 'text-to-visual'));
+    }
+    return deck;
+  }
+
+  function buildQuestion([num, den], type) {
+    // 3 distracteurs parmi les autres fractions
+    const others = shuffle(FRACTIONS.filter(([n,d]) => !(n===num && d===den)));
+    const distractors = others.slice(0, 3);
+
+    if (type === 'visual-to-text') {
+      // Montrer le camembert, choisir la fraction écrite
+      const choices = shuffle([[num,den], ...distractors]);
+      return {
+        type,
+        frac: [num, den],
+        choices,
+        correctIdx: choices.findIndex(([n,d]) => n===num && d===den),
+      };
+    } else {
+      // Montrer la fraction écrite, choisir le bon camembert
+      const choices = shuffle([[num,den], ...distractors]);
+      return {
+        type,
+        frac: [num, den],
+        choices,
+        correctIdx: choices.findIndex(([n,d]) => n===num && d===den),
+      };
+    }
+  }
+
+  let questions = buildDeck(), idx = 0, score = 0, answered = false;
+
+  const qLabel      = document.getElementById('qLabel');
+  const qVisual     = document.getElementById('qVisual');
+  const choicesGrid = document.getElementById('choicesGrid');
+  const progFill    = document.getElementById('progressFill');
+  const progText    = document.getElementById('progressText');
+  const btnNext     = document.getElementById('btnNext');
+  const gameDiv     = document.getElementById('game');
+  const summaryDiv  = document.getElementById('summary');
+  const COLOR       = '#2563eb';
+
+  function showQuestion() {
+    answered = false;
+    btnNext.classList.add('hidden');
+    const q = questions[idx];
+    const [num, den] = q.frac;
+    progText.textContent = `${idx + 1} / ${TOTAL}`;
+    progFill.style.width = `${(idx / TOTAL) * 100}%`;
+
+    if (q.type === 'visual-to-text') {
+      qLabel.textContent = 'Quelle fraction est coloriée ?';
+      qVisual.innerHTML  = pieSVG(num, den, COLOR, 140);
+    } else {
+      qLabel.textContent = 'Choisis le bon dessin pour :';
+      qVisual.innerHTML  = `<div class="frac-text">
+        <span class="num">${num}</span>
+        <span class="bar"></span>
+        <span class="den">${den}</span>
+      </div>`;
+    }
+
+    choicesGrid.innerHTML = '';
+    q.choices.forEach(([cn, cd], i) => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.innerHTML = q.type === 'visual-to-text'
+        ? fracLabel(cn, cd)
+        : pieSVG(cn, cd, 'white', 64);
+      btn.dataset.idx = i;
+      btn.addEventListener('click', () => answer(i === q.correctIdx, btn, q.correctIdx));
+      choicesGrid.appendChild(btn);
+    });
+  }
+
+  function answer(isCorrect, btn, correctIdx) {
+    if (answered) return;
+    answered = true;
+    const btns = choicesGrid.querySelectorAll('.choice-btn');
+    btns.forEach(b => b.disabled = true);
+    btns[correctIdx].classList.add('correct');
+    if (!isCorrect) btn.classList.add('wrong');
+    else score++;
+    btnNext.textContent = idx === TOTAL - 1 ? 'Voir mon score' : 'Question suivante →';
+    btnNext.classList.remove('hidden');
+  }
+
+  btnNext.addEventListener('click', () => { idx++; if (idx >= TOTAL) showSummary(); else showQuestion(); });
+
+  function showSummary() {
+    progFill.style.width = '100%';
+    gameDiv.style.display = 'none';
+    summaryDiv.classList.add('visible');
+    const pct = score / TOTAL;
+    const tier = pct === 1 ? 4 : pct >= 0.8 ? 3 : pct >= 0.6 ? 2 : pct >= 0.4 ? 1 : 0;
+    document.getElementById('sumIcon').textContent  = ['💪','👍','⭐⭐','⭐⭐⭐','🎉'][tier];
+    document.getElementById('sumTitle').textContent = ['Continue !','Pas mal !','Bien !','Très bien !','Parfait !'][tier];
+    document.getElementById('sumSub').textContent   = `${score} / ${TOTAL} bonnes réponses`;
+  }
+
+  document.getElementById('btnRestart').addEventListener('click', () => {
+    questions = buildDeck(); idx = 0; score = 0;
+    gameDiv.style.display = '';
+    summaryDiv.classList.remove('visible');
+    showQuestion();
+  });
+
+  showQuestion();
+</script>
+</body>
+</html>

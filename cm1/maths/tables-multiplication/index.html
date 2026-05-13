@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Tables de multiplication — CM1 — Mon Cartable</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/css/shared.css">
+<style>
+  :root { --subject: #2563eb; --subject-dark: #1e40af; }
+
+  body { display: flex; flex-direction: column; gap: 16px; }
+
+  /* ── Écran de configuration ─────────────────────────────── */
+  .setup-title  { font-size: 22px; font-weight: 700; color: var(--text); text-align: center; }
+  .setup-sub    { font-size: 14px; color: var(--muted); text-align: center; }
+
+  .table-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  .table-btn {
+    border: none;
+    border-radius: 14px;
+    padding: 16px 4px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: #e5e7eb;
+    color: #9ca3af;
+    box-shadow: 0 3px 0 #d1d5db;
+  }
+
+  .table-btn.active {
+    background: var(--subject);
+    color: white;
+    box-shadow: 0 3px 0 var(--subject-dark);
+  }
+
+  .table-btn:active { transform: translateY(2px); }
+
+  .btn-start {
+    background: var(--subject);
+    box-shadow: 0 4px 0 var(--subject-dark);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 18px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .btn-start:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--subject-dark); }
+
+  /* ── Jeu ────────────────────────────────────────────────── */
+  .topbar { display: flex; align-items: center; }
+  .progress-wrap { flex: 1; background: #e5e7eb; border-radius: 99px; height: 8px; overflow: hidden; margin: 0 12px; }
+  .progress-fill { background: var(--subject); height: 100%; border-radius: 99px; width: 0%; transition: width 0.4s ease; }
+  .progress-text { font-size: 15px; font-weight: 600; color: var(--muted); min-width: 48px; text-align: right; }
+
+  .question-card {
+    background: white;
+    border-radius: 24px;
+    padding: 28px 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 130px;
+  }
+
+  .q-factor { font-size: 56px; font-weight: 700; color: var(--subject); line-height: 1; }
+  .q-op     { font-size: 40px; font-weight: 600; color: #9ca3af; line-height: 1; }
+  .q-mark   { font-size: 56px; font-weight: 700; color: #d1d5db; line-height: 1; }
+
+  .choices-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .choice-btn {
+    background: var(--subject);
+    box-shadow: 0 4px 0 var(--subject-dark);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 22px 8px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .choice-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--subject-dark); }
+  .choice-btn[disabled] { cursor: default; }
+
+  .choice-btn.correct { background: #16a34a; box-shadow: 0 4px 0 #14532d; }
+  .choice-btn.wrong   { background: #dc2626; box-shadow: 0 4px 0 #991b1b; }
+
+  .btn-next {
+    background: var(--subject);
+    box-shadow: 0 4px 0 var(--subject-dark);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 18px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .btn-next:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--subject-dark); }
+  .btn-next.hidden { display: none; }
+
+  /* ── Résumé ─────────────────────────────────────────────── */
+  .summary { display: none; flex-direction: column; align-items: center; gap: 20px; text-align: center; padding: 24px 0; }
+  .summary.visible { display: flex; }
+  .summary-icon  { font-size: 72px; line-height: 1; }
+  .summary-title { font-size: 26px; font-weight: 700; color: var(--text); }
+  .summary-sub   { font-size: 16px; color: var(--muted); margin-top: -10px; }
+  .summary-btns  { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+  .btn-restart { border: none; border-radius: 16px; padding: 18px; font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700; color: white; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; background: var(--subject); box-shadow: 0 4px 0 var(--subject-dark); }
+  .btn-restart:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--subject-dark); }
+
+  @media (min-width: 600px) {
+    .table-grid { grid-template-columns: repeat(4, 1fr); }
+    .q-factor { font-size: 72px; }
+    .choice-btn { font-size: 40px; }
+    .summary-btns { flex-direction: row; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ÉCRAN 1 : choix des tables -->
+<div id="setup">
+  <a href="../index.html" class="back-link">← Retour</a>
+  <p class="setup-title">Tables de multiplication</p>
+  <p class="setup-sub">Coche les tables à réviser</p>
+
+  <div class="table-grid" id="tableGrid"></div>
+
+  <button class="btn-start" id="btnStart">Commencer →</button>
+</div>
+
+<!-- ÉCRAN 2 : jeu -->
+<div id="game" style="display:none">
+  <div class="topbar">
+    <a href="../index.html" class="back-link">← Retour</a>
+    <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="progress-text" id="progressText"></span>
+  </div>
+
+  <div class="question-card">
+    <span class="q-factor" id="qA"></span>
+    <span class="q-op">×</span>
+    <span class="q-factor" id="qB"></span>
+    <span class="q-op">=</span>
+    <span class="q-mark">?</span>
+  </div>
+
+  <div class="choices-grid" id="choicesGrid"></div>
+
+  <button class="btn-next hidden" id="btnNext">Suivant →</button>
+</div>
+
+<!-- ÉCRAN 3 : résumé -->
+<div class="summary" id="summary">
+  <div class="summary-icon"  id="sumIcon"></div>
+  <div class="summary-title" id="sumTitle"></div>
+  <div class="summary-sub"   id="sumSub"></div>
+  <div class="summary-btns">
+    <button class="btn-restart" id="btnRestart">Recommencer</button>
+    <button class="btn-restart" id="btnReconfig" style="background:#6b7280;box-shadow:0 4px 0 #4b5563">Changer les tables</button>
+  </div>
+</div>
+
+<script>
+  const MAX_Q = 20;
+
+  // ── Setup ───────────────────────────────────────────────────
+  const tableGrid  = document.getElementById('tableGrid');
+  const btnStart   = document.getElementById('btnStart');
+  const setupDiv   = document.getElementById('setup');
+  const gameDiv    = document.getElementById('game');
+  const summaryDiv = document.getElementById('summary');
+
+  for (let n = 2; n <= 9; n++) {
+    const btn = document.createElement('button');
+    btn.className = 'table-btn active';
+    btn.textContent = `×${n}`;
+    btn.dataset.n = n;
+    btn.addEventListener('click', () => btn.classList.toggle('active'));
+    tableGrid.appendChild(btn);
+  }
+
+  btnStart.addEventListener('click', () => {
+    const selected = [...tableGrid.querySelectorAll('.table-btn.active')].map(b => +b.dataset.n);
+    if (selected.length === 0) return;
+    setupDiv.style.display = 'none';
+    startGame(selected);
+  });
+
+  // ── Génération des questions ─────────────────────────────────
+  function buildDeck(tables) {
+    const all = [];
+    tables.forEach(t => {
+      for (let i = 1; i <= 10; i++) all.push([t, i]);
+    });
+    shuffle(all);
+    return all.slice(0, MAX_Q);
+  }
+
+  function wrongAnswers(a, b) {
+    const correct = a * b;
+    const pool = new Set();
+    [[a-1,b],[a+1,b],[a,b-1],[a,b+1],[a-2,b],[a+2,b],[a,b+2],[a,b-2]].forEach(([x,y]) => {
+      if (x > 0 && y > 0) { const v = x*y; if (v !== correct && v > 0) pool.add(v); }
+    });
+    let d = 1;
+    while (pool.size < 3) { pool.add(correct + d); pool.add(Math.max(1, correct - d)); d++; }
+    pool.delete(correct);
+    return shuffle([...pool]).slice(0, 3);
+  }
+
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+    return a;
+  }
+
+  // ── Jeu ──────────────────────────────────────────────────────
+  let deck = [], idx = 0, score = 0, answered = false;
+
+  const qA          = document.getElementById('qA');
+  const qB          = document.getElementById('qB');
+  const choicesGrid = document.getElementById('choicesGrid');
+  const progFill    = document.getElementById('progressFill');
+  const progText    = document.getElementById('progressText');
+  const btnNext     = document.getElementById('btnNext');
+
+  function startGame(tables) {
+    deck = buildDeck(tables);
+    idx = 0; score = 0;
+    gameDiv.style.display = '';
+    summaryDiv.classList.remove('visible');
+    showQuestion();
+  }
+
+  function showQuestion() {
+    answered = false;
+    const [a, b] = deck[idx];
+    qA.textContent = a;
+    qB.textContent = b;
+    progText.textContent = `${idx + 1} / ${deck.length}`;
+    progFill.style.width = `${(idx / deck.length) * 100}%`;
+    btnNext.classList.add('hidden');
+
+    const correct = a * b;
+    const choices = shuffle([correct, ...wrongAnswers(a, b)]);
+
+    choicesGrid.innerHTML = '';
+    choices.forEach(val => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = val;
+      btn.addEventListener('click', () => answer(val === correct, btn, correct));
+      choicesGrid.appendChild(btn);
+    });
+  }
+
+  function answer(isCorrect, btn, correct) {
+    if (answered) return;
+    answered = true;
+    choicesGrid.querySelectorAll('.choice-btn').forEach(b => {
+      b.disabled = true;
+      if (+b.textContent === correct) b.classList.add('correct');
+    });
+    if (!isCorrect) btn.classList.add('wrong');
+    else score++;
+    btnNext.classList.remove('hidden');
+  }
+
+  btnNext.addEventListener('click', () => {
+    idx++;
+    if (idx >= deck.length) showSummary(); else showQuestion();
+  });
+
+  function showSummary() {
+    progFill.style.width = '100%';
+    gameDiv.style.display = 'none';
+    summaryDiv.classList.add('visible');
+    const total = deck.length, pct = score / total;
+    const icons  = ['💪', '👍', '⭐⭐', '⭐⭐⭐', '🎉'];
+    const titles = ['Continue comme ça !', 'Pas mal !', 'Bien !', 'Très bien !', 'Parfait !'];
+    const tier = pct === 1 ? 4 : pct >= 0.8 ? 3 : pct >= 0.6 ? 2 : pct >= 0.4 ? 1 : 0;
+    document.getElementById('sumIcon').textContent  = icons[tier];
+    document.getElementById('sumTitle').textContent = titles[tier];
+    document.getElementById('sumSub').textContent   = `${score} / ${total} bonnes réponses`;
+  }
+
+  document.getElementById('btnRestart').addEventListener('click', () => {
+    const tables = [...tableGrid.querySelectorAll('.table-btn.active')].map(b => +b.dataset.n);
+    if (tables.length === 0) return;
+    gameDiv.style.display = '';
+    summaryDiv.classList.remove('visible');
+    startGame(tables);
+  });
+
+  document.getElementById('btnReconfig').addEventListener('click', () => {
+    summaryDiv.classList.remove('visible');
+    setupDiv.style.display = '';
+  });
+</script>
+</body>
+</html>
