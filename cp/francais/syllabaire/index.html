@@ -78,7 +78,7 @@
   .btn-start:disabled { background: #e5e7eb; box-shadow: 0 4px 0 #d1d5db; color: #9ca3af; cursor: default; transform: none; }
 
   /* ── Game ── */
-  #game { display: flex; flex-direction: column; gap: 16px; display: none; }
+  #game { display: flex; flex-direction: column; gap: 16px; }
 
   .topbar { display: flex; align-items: center; }
   .progress-wrap { flex: 1; background: #e5e7eb; border-radius: 99px; height: 8px; overflow: hidden; margin: 0 12px; }
@@ -222,7 +222,7 @@
 </div>
 
 <!-- ── Jeu ── -->
-<div id="game">
+<div id="game" style="display:none">
   <div class="topbar">
     <a href="../index.html" class="back-link">← Retour</a>
     <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
@@ -346,7 +346,7 @@
     deck = shuffle(cards);
     missed = []; idx = 0; known = 0;
     setupDiv.style.display = 'none';
-    gameDiv.style.display = 'flex';
+    gameDiv.style.display = '';
     summaryDiv.classList.remove('visible');
     showCard();
   }
