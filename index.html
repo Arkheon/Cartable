@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mon Cartable</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/shared.css">
+<style>
+  body { padding-top: 32px; }
+
+  .hero {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .hero h1 {
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .hero p {
+    font-size: 16px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  /* Couleur des cartes de niveau */
+  :root {
+    --card-color: var(--level-color);
+    --card-dark:  var(--level-dark);
+  }
+
+  @media (min-width: 600px) {
+    .hero h1 { font-size: 48px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Mon Cartable</h1>
+  <p>Choisis ton niveau</p>
+</div>
+
+<div class="nav-grid">
+  <a href="cp/index.html" class="nav-card">CP</a>
+
+  <div class="nav-card disabled">
+    CE1
+    <span class="badge-soon">bientôt</span>
+  </div>
+
+  <div class="nav-card disabled">
+    CE2
+    <span class="badge-soon">bientôt</span>
+  </div>
+
+  <div class="nav-card disabled">
+    CM1
+    <span class="badge-soon">bientôt</span>
+  </div>
+
+  <div class="nav-card disabled">
+    CM2
+    <span class="badge-soon">bientôt</span>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Cartes Séguin — Apprendre les nombres</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/css/shared.css">
+<style>
+  body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  header { text-align: center; }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .hint {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .stage {
+    flex: 0 0 auto;
+    background: white;
+    border-radius: 24px;
+    padding: 20px 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 160px;
+    position: relative;
+  }
+
+  .display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    min-height: 90px;
+  }
+
+  .display .placeholder {
+    color: #d1d5db;
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  .tens-card-display, .units-card-display {
+    background: var(--tens-color);
+    color: white;
+    font-weight: 700;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .tens-card-display {
+    width: 180px;
+    height: 90px;
+    font-size: 56px;
+    letter-spacing: 2px;
+    animation: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .units-card-display {
+    position: absolute;
+    width: 80px;
+    height: 90px;
+    font-size: 56px;
+    right: calc(50% - 90px);
+    background: var(--units-color);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+    animation: slideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 2;
+  }
+
+  @keyframes pop {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes slideIn {
+    0% { transform: translateX(120px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+
+  .number-name {
+    margin-top: 14px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    min-height: 24px;
+    text-align: center;
+    padding: 0 8px;
+  }
+
+  .reset-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 12px;
+    padding: 8px 12px;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.15s;
+  }
+
+  .reset-btn:active { background: #e5e7eb; }
+
+  .section-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    padding-left: 4px;
+  }
+
+  .label-tens  { color: var(--tens-color); }
+  .label-units { color: var(--units-color); }
+
+  .cards-grid {
+    display: grid;
+    gap: 8px;
+  }
+
+  .tens-grid  { grid-template-columns: repeat(3, 1fr); }
+  .units-grid { grid-template-columns: repeat(5, 1fr); }
+
+  .card {
+    border: none;
+    border-radius: 14px;
+    padding: 14px 8px;
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.2s;
+    color: white;
+    text-align: center;
+  }
+
+  .tens-card {
+    background: var(--tens-color);
+    font-size: 28px;
+    letter-spacing: 1px;
+    box-shadow: 0 3px 0 var(--tens-color-dark);
+  }
+
+  .units-card {
+    background: var(--units-color);
+    font-size: 24px;
+    box-shadow: 0 3px 0 var(--units-color-dark);
+  }
+
+  .card:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--tens-color-dark);
+  }
+
+  .units-card:active {
+    box-shadow: 0 1px 0 var(--units-color-dark);
+  }
+
+  .card.selected {
+    transform: translateY(2px);
+    opacity: 0.6;
+  }
+
+  .section-block { flex: 0 1 auto; }
+
+  footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    padding-top: 4px;
+  }
+
+  @media (min-width: 600px) {
+    h1 { font-size: 28px; }
+    .tens-card-display { width: 220px; height: 110px; font-size: 72px; }
+    .units-card-display { width: 100px; height: 110px; font-size: 72px; right: calc(50% - 110px); }
+    .tens-card  { font-size: 34px; }
+    .units-card { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<a href="../index.html" class="back-link">← Retour</a>
+
+<header>
+  <h1>Cartes Séguin</h1>
+  <p class="hint">Touche une carte bleue, puis une carte rouge</p>
+</header>
+
+<div class="stage">
+  <button class="reset-btn" id="reset" style="display:none">↺ Effacer</button>
+  <div class="display" id="display">
+    <span class="placeholder" id="placeholder">Choisis une dizaine</span>
+  </div>
+  <div class="number-name" id="numberName"></div>
+</div>
+
+<div class="section-block">
+  <div class="section-label label-tens">Les dizaines</div>
+  <div class="cards-grid tens-grid" id="tensGrid"></div>
+</div>
+
+<div class="section-block">
+  <div class="section-label label-units">Les unités</div>
+  <div class="cards-grid units-grid" id="unitsGrid"></div>
+</div>
+
+<footer>Glisse la rouge sur le 0 de la bleue pour former le nombre</footer>
+
+<script>
+  const unitNames = ['', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf'];
+  const teens = ['dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];
+
+  function getNumberName(n) {
+    if (n < 10) return unitNames[n];
+    if (n < 20) return teens[n - 10];
+
+    const tens = Math.floor(n / 10);
+    const units = n % 10;
+
+    const tensNames = { 2: 'vingt', 3: 'trente', 4: 'quarante', 5: 'cinquante', 6: 'soixante' };
+
+    if (tens <= 6) {
+      if (units === 0) return tensNames[tens];
+      if (units === 1) return tensNames[tens] + ' et un';
+      return tensNames[tens] + '-' + unitNames[units];
+    }
+
+    if (tens === 7) {
+      if (units === 1) return 'soixante et onze';
+      return 'soixante-' + teens[units];
+    }
+
+    if (tens === 8) {
+      if (units === 0) return 'quatre-vingts';
+      return 'quatre-vingt-' + unitNames[units];
+    }
+
+    if (tens === 9) {
+      return 'quatre-vingt-' + teens[units];
+    }
+
+    return '';
+  }
+
+  let selectedTens = null;
+  let selectedUnits = null;
+
+  const tensGrid    = document.getElementById('tensGrid');
+  const unitsGrid   = document.getElementById('unitsGrid');
+  const display     = document.getElementById('display');
+  const placeholder = document.getElementById('placeholder');
+  const numberName  = document.getElementById('numberName');
+  const resetBtn    = document.getElementById('reset');
+
+  for (let i = 1; i <= 9; i++) {
+    const card = document.createElement('button');
+    card.className = 'card tens-card';
+    card.textContent = i * 10;
+    card.dataset.value = i * 10;
+    card.addEventListener('click', () => selectTens(i * 10, card));
+    tensGrid.appendChild(card);
+  }
+
+  for (let i = 1; i <= 9; i++) {
+    const card = document.createElement('button');
+    card.className = 'card units-card';
+    card.textContent = i;
+    card.dataset.value = i;
+    card.addEventListener('click', () => selectUnits(i, card));
+    unitsGrid.appendChild(card);
+  }
+
+  function selectTens(value, btn) {
+    selectedTens = value;
+    selectedUnits = null;
+    document.querySelectorAll('.tens-card').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('.units-card').forEach(c => c.classList.remove('selected'));
+    btn.classList.add('selected');
+    updateDisplay();
+  }
+
+  function selectUnits(value, btn) {
+    if (selectedTens === null) {
+      flashPlaceholder();
+      return;
+    }
+    selectedUnits = value;
+    document.querySelectorAll('.units-card').forEach(c => c.classList.remove('selected'));
+    btn.classList.add('selected');
+    updateDisplay();
+  }
+
+  function updateDisplay() {
+    display.innerHTML = '';
+
+    if (selectedTens === null) {
+      const ph = document.createElement('span');
+      ph.className = 'placeholder';
+      ph.textContent = 'Choisis une dizaine';
+      display.appendChild(ph);
+      numberName.textContent = '';
+      resetBtn.style.display = 'none';
+      return;
+    }
+
+    resetBtn.style.display = 'block';
+
+    const tensCard = document.createElement('div');
+    tensCard.className = 'tens-card-display';
+    tensCard.textContent = selectedTens;
+    display.appendChild(tensCard);
+
+    if (selectedUnits !== null) {
+      const unitsCard = document.createElement('div');
+      unitsCard.className = 'units-card-display';
+      unitsCard.textContent = selectedUnits;
+      display.appendChild(unitsCard);
+
+      const total = selectedTens + selectedUnits;
+      numberName.textContent = getNumberName(total);
+    } else {
+      const hint = document.createElement('span');
+      hint.style.marginLeft = '14px';
+      hint.style.color = '#9ca3af';
+      hint.style.fontSize = '15px';
+      hint.style.fontWeight = '500';
+      hint.textContent = '+ choisis une unité';
+      display.appendChild(hint);
+      numberName.textContent = getNumberName(selectedTens);
+    }
+  }
+
+  function flashPlaceholder() {
+    placeholder.style.color = 'var(--units-color)';
+    placeholder.style.transform = 'scale(1.05)';
+    placeholder.style.transition = 'all 0.2s';
+    setTimeout(() => {
+      placeholder.style.color = '';
+      placeholder.style.transform = '';
+    }, 400);
+  }
+
+  resetBtn.addEventListener('click', () => {
+    selectedTens = null;
+    selectedUnits = null;
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+    updateDisplay();
+  });
+
+  updateDisplay();
+</script>
+
+</body>
+</html>

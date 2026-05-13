@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CP — Mathématiques — Mon Cartable</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/css/shared.css">
+<style>
+  /* Liste d'exercices : une colonne pour laisser de la place à la description */
+  .nav-grid { grid-template-columns: 1fr; }
+
+  @media (min-width: 600px) {
+    .nav-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<a href="../index.html" class="back-link">← Retour</a>
+
+<div class="page-header">
+  <h1>CP — Mathématiques</h1>
+  <p>Choisis un exercice</p>
+</div>
+
+<div class="nav-grid">
+  <!-- Ajouter les prochains exercices ici, sur le même modèle -->
+  <a href="cartes-seguin/index.html" class="nav-card"
+     style="--card-color: var(--maths-color); --card-dark: var(--maths-dark)">
+    Cartes Séguin
+    <span class="nav-card-desc">Apprendre les nombres jusqu'à 99</span>
+  </a>
+</div>
+
+</body>
+</html>
