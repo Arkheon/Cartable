@@ -14,9 +14,39 @@
   body { display: flex; flex-direction: column; gap: 16px; }
 
   /* ── Écran de configuration ─────────────────────────────── */
-  .setup-title  { font-size: 22px; font-weight: 700; color: var(--text); text-align: center; }
-  .setup-sub    { font-size: 14px; color: var(--muted); text-align: center; }
 
+  #setup {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .setup-header { text-align: center; }
+  .setup-title  { font-size: 22px; font-weight: 700; color: var(--text); }
+  .setup-sub    { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+  /* Bouton "toutes les tables" */
+  .btn-random {
+    background: #e5e7eb;
+    color: #6b7280;
+    box-shadow: 0 3px 0 #d1d5db;
+    border: none;
+    border-radius: 14px;
+    padding: 16px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-random.active {
+    background: var(--subject);
+    color: white;
+    box-shadow: 0 3px 0 var(--subject-dark);
+  }
+  .btn-random:active { transform: translateY(2px); }
+
+  /* Grille des tables */
   .table-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -36,15 +66,14 @@
     color: #9ca3af;
     box-shadow: 0 3px 0 #d1d5db;
   }
-
   .table-btn.active {
     background: var(--subject);
     color: white;
     box-shadow: 0 3px 0 var(--subject-dark);
   }
-
   .table-btn:active { transform: translateY(2px); }
 
+  /* Bouton Commencer */
   .btn-start {
     background: var(--subject);
     box-shadow: 0 4px 0 var(--subject-dark);
@@ -56,9 +85,15 @@
     font-size: 18px;
     font-weight: 700;
     cursor: pointer;
-    transition: transform 0.1s, box-shadow 0.1s;
+    transition: transform 0.1s, box-shadow 0.1s, background 0.15s;
   }
   .btn-start:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--subject-dark); }
+  .btn-start:disabled {
+    background: #e5e7eb;
+    box-shadow: 0 4px 0 #d1d5db;
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
 
   /* ── Jeu ────────────────────────────────────────────────── */
   .topbar { display: flex; align-items: center; }
@@ -103,24 +138,10 @@
   }
   .choice-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--subject-dark); }
   .choice-btn[disabled] { cursor: default; }
-
   .choice-btn.correct { background: #16a34a; box-shadow: 0 4px 0 #14532d; }
   .choice-btn.wrong   { background: #dc2626; box-shadow: 0 4px 0 #991b1b; }
 
-  .btn-next {
-    background: var(--subject);
-    box-shadow: 0 4px 0 var(--subject-dark);
-    color: white;
-    border: none;
-    border-radius: 16px;
-    padding: 18px;
-    font-family: 'Fredoka', sans-serif;
-    font-size: 18px;
-    font-weight: 700;
-    cursor: pointer;
-    width: 100%;
-    transition: transform 0.1s, box-shadow 0.1s;
-  }
+  .btn-next { background: var(--subject); box-shadow: 0 4px 0 var(--subject-dark); color: white; border: none; border-radius: 16px; padding: 18px; font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700; cursor: pointer; width: 100%; transition: transform 0.1s, box-shadow 0.1s; }
   .btn-next:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--subject-dark); }
   .btn-next.hidden { display: none; }
 
@@ -135,7 +156,6 @@
   .btn-restart:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--subject-dark); }
 
   @media (min-width: 600px) {
-    .table-grid { grid-template-columns: repeat(4, 1fr); }
     .q-factor { font-size: 72px; }
     .choice-btn { font-size: 40px; }
     .summary-btns { flex-direction: row; }
@@ -147,12 +167,19 @@
 <!-- ÉCRAN 1 : choix des tables -->
 <div id="setup">
   <a href="../index.html" class="back-link">← Retour</a>
-  <p class="setup-title">Tables de multiplication</p>
-  <p class="setup-sub">Coche les tables à réviser</p>
 
+  <div class="setup-header">
+    <p class="setup-title">Tables de multiplication</p>
+    <p class="setup-sub">Coche les tables à réviser</p>
+  </div>
+
+  <!-- Sélection rapide : toutes les tables -->
+  <button class="btn-random" id="btnRandom">🎲 Toutes les tables (aléatoire)</button>
+
+  <!-- Sélection individuelle -->
   <div class="table-grid" id="tableGrid"></div>
 
-  <button class="btn-start" id="btnStart">Commencer →</button>
+  <button class="btn-start" id="btnStart" disabled>Commencer →</button>
 </div>
 
 <!-- ÉCRAN 2 : jeu -->
@@ -189,21 +216,43 @@
 
 <script>
   const MAX_Q = 20;
+  const ALL_TABLES = [2,3,4,5,6,7,8,9];
 
   // ── Setup ───────────────────────────────────────────────────
   const tableGrid  = document.getElementById('tableGrid');
   const btnStart   = document.getElementById('btnStart');
+  const btnRandom  = document.getElementById('btnRandom');
   const setupDiv   = document.getElementById('setup');
   const gameDiv    = document.getElementById('game');
   const summaryDiv = document.getElementById('summary');
 
-  for (let n = 2; n <= 9; n++) {
+  // Créer les boutons de tables (tous décochés par défaut)
+  ALL_TABLES.forEach(n => {
     const btn = document.createElement('button');
-    btn.className = 'table-btn active';
+    btn.className = 'table-btn';
     btn.textContent = `×${n}`;
     btn.dataset.n = n;
-    btn.addEventListener('click', () => btn.classList.toggle('active'));
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('active');
+      syncState();
+    });
     tableGrid.appendChild(btn);
+  });
+
+  // "Toutes les tables" : coche/décoche tout en un clic
+  btnRandom.addEventListener('click', () => {
+    const allActive = tableGrid.querySelectorAll('.table-btn.active').length === ALL_TABLES.length;
+    tableGrid.querySelectorAll('.table-btn').forEach(b =>
+      b.classList.toggle('active', !allActive)
+    );
+    syncState();
+  });
+
+  // Met à jour l'état du bouton "aléatoire" et du bouton "commencer"
+  function syncState() {
+    const activeCount = tableGrid.querySelectorAll('.table-btn.active').length;
+    btnRandom.classList.toggle('active', activeCount === ALL_TABLES.length);
+    btnStart.disabled = activeCount === 0;
   }
 
   btnStart.addEventListener('click', () => {
@@ -213,12 +262,10 @@
     startGame(selected);
   });
 
-  // ── Génération des questions ─────────────────────────────────
+  // ── Génération ───────────────────────────────────────────────
   function buildDeck(tables) {
     const all = [];
-    tables.forEach(t => {
-      for (let i = 1; i <= 10; i++) all.push([t, i]);
-    });
+    tables.forEach(t => { for (let i = 1; i <= 10; i++) all.push([t, i]); });
     shuffle(all);
     return all.slice(0, MAX_Q);
   }
@@ -270,7 +317,6 @@
 
     const correct = a * b;
     const choices = shuffle([correct, ...wrongAnswers(a, b)]);
-
     choicesGrid.innerHTML = '';
     choices.forEach(val => {
       const btn = document.createElement('button');
@@ -303,11 +349,9 @@
     gameDiv.style.display = 'none';
     summaryDiv.classList.add('visible');
     const total = deck.length, pct = score / total;
-    const icons  = ['💪', '👍', '⭐⭐', '⭐⭐⭐', '🎉'];
-    const titles = ['Continue comme ça !', 'Pas mal !', 'Bien !', 'Très bien !', 'Parfait !'];
     const tier = pct === 1 ? 4 : pct >= 0.8 ? 3 : pct >= 0.6 ? 2 : pct >= 0.4 ? 1 : 0;
-    document.getElementById('sumIcon').textContent  = icons[tier];
-    document.getElementById('sumTitle').textContent = titles[tier];
+    document.getElementById('sumIcon').textContent  = ['💪','👍','⭐⭐','⭐⭐⭐','🎉'][tier];
+    document.getElementById('sumTitle').textContent = ['Continue comme ça !','Pas mal !','Bien !','Très bien !','Parfait !'][tier];
     document.getElementById('sumSub').textContent   = `${score} / ${total} bonnes réponses`;
   }
 
