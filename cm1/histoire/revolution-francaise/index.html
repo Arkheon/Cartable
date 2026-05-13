@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>La Révolution française — Histoire CM1 — Mon Cartable</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/css/shared.css">
+<style>
+  :root {
+    --subject:      var(--histoire-color);
+    --subject-dark: var(--histoire-dark);
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Barre de progression */
+  .topbar {
+    display: flex;
+    align-items: center;
+  }
+
+  .progress-wrap {
+    flex: 1;
+    background: #e5e7eb;
+    border-radius: 99px;
+    height: 8px;
+    overflow: hidden;
+    margin: 0 12px;
+  }
+
+  .progress-fill {
+    background: var(--subject);
+    height: 100%;
+    border-radius: 99px;
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+
+  .progress-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--muted);
+    min-width: 48px;
+    text-align: right;
+  }
+
+  /* Carte question */
+  .question-card {
+    background: white;
+    border-radius: 20px;
+    padding: 24px 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    border-left: 5px solid var(--subject);
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+  }
+
+  .question-text {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.4;
+  }
+
+  /* Choix */
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .choice-btn {
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 14px 16px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    line-height: 1.3;
+  }
+
+  .choice-btn:active { transform: scale(0.98); }
+
+  .choice-btn:not([disabled]):hover {
+    border-color: var(--subject);
+  }
+
+  .choice-btn.correct {
+    background: #dcfce7;
+    border-color: #16a34a;
+    color: #14532d;
+  }
+
+  .choice-btn.wrong {
+    background: #fee2e2;
+    border-color: #dc2626;
+    color: #7f1d1d;
+  }
+
+  .choice-btn[disabled] { cursor: default; }
+
+  /* Explication */
+  .hint-box {
+    background: #eff6ff;
+    border-radius: 14px;
+    padding: 14px 16px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #1e40af;
+    display: none;
+    line-height: 1.4;
+  }
+
+  .hint-box.visible { display: block; }
+
+  /* Bouton suivant */
+  .btn-next {
+    background: var(--subject);
+    box-shadow: 0 4px 0 var(--subject-dark);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 18px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+
+  .btn-next:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--subject-dark); }
+
+  .btn-next.hidden { display: none; }
+
+  /* Écran de fin */
+  .summary {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    text-align: center;
+    padding: 24px 0;
+  }
+
+  .summary.visible { display: flex; }
+
+  .summary-icon  { font-size: 72px; line-height: 1; }
+  .summary-title { font-size: 26px; font-weight: 700; color: var(--text); }
+  .summary-sub   { font-size: 16px; color: var(--muted); margin-top: -10px; }
+
+  .stars {
+    display: flex;
+    gap: 8px;
+    font-size: 40px;
+  }
+
+  .summary-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .btn-restart {
+    border: none;
+    border-radius: 16px;
+    padding: 18px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    background: var(--subject);
+    box-shadow: 0 4px 0 var(--subject-dark);
+  }
+  .btn-restart:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--subject-dark); }
+
+  @media (min-width: 600px) {
+    .question-text { font-size: 20px; }
+    .choice-btn    { font-size: 17px; }
+    .summary-btns  { flex-direction: row; }
+  }
+</style>
+</head>
+<body>
+
+<div id="game">
+  <div class="topbar">
+    <a href="../index.html" class="back-link">← Retour</a>
+    <div class="progress-wrap">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <span class="progress-text" id="progressText"></span>
+  </div>
+
+  <div class="question-card">
+    <p class="question-text" id="questionText"></p>
+  </div>
+
+  <div class="choices" id="choices"></div>
+
+  <div class="hint-box" id="hintBox"></div>
+
+  <button class="btn-next hidden" id="btnNext">Question suivante →</button>
+</div>
+
+<div class="summary" id="summary">
+  <div class="stars" id="stars"></div>
+  <div class="summary-title" id="summaryTitle"></div>
+  <div class="summary-sub"   id="summarySub"></div>
+  <div class="summary-btns">
+    <button class="btn-restart" id="btnRestart">Recommencer</button>
+  </div>
+</div>
+
+<script>
+  const QUESTIONS = [
+    {
+      q: "Pourquoi Louis XVI réunit-il les États généraux en 1789 ?",
+      choices: [
+        "Pour déclarer la guerre à l'Angleterre",
+        "Pour faire face à une grande crise économique",
+        "Pour célébrer son couronnement",
+        "Pour construire de nouvelles prisons",
+      ],
+      correct: 1,
+      hint: "En 1789, la France manquait d'argent à cause d'une grave crise économique.",
+    },
+    {
+      q: "Que sont les cahiers de doléances ?",
+      choices: [
+        "Des livres d'école du tiers état",
+        "Des lettres envoyées au roi pour le remercier",
+        "Des cahiers où le tiers état écrit ses plaintes et ses souhaits",
+        "Des listes de prisonniers de la Bastille",
+      ],
+      correct: 2,
+      hint: "« Doléances » vient du latin « dolor » (douleur) : c'est un cahier de plaintes.",
+    },
+    {
+      q: "Dans la société d'ordres, qui ne payait PAS d'impôt ?",
+      choices: [
+        "Le tiers état",
+        "Les nobles et le clergé",
+        "Les marchands",
+        "Les paysans",
+      ],
+      correct: 1,
+      hint: "Les nobles et le clergé avaient des privilèges : ils étaient exemptés d'impôts, même s'ils étaient plus riches.",
+    },
+    {
+      q: "Que s'est-il passé le 14 juillet 1789 ?",
+      choices: [
+        "Louis XVI a abdiqué",
+        "Les États généraux se sont réunis pour la première fois",
+        "Des Parisiens en colère ont pris la Bastille",
+        "La République française a été proclamée",
+      ],
+      correct: 2,
+      hint: "Le 14 juillet est aujourd'hui la fête nationale française, en souvenir de la prise de la Bastille.",
+    },
+    {
+      q: "Pourquoi les Parisiens ont-ils pris la Bastille ?",
+      choices: [
+        "Pour libérer des prisonniers politiques célèbres",
+        "Pour y installer l'Assemblée nationale",
+        "Pour y trouver des munitions",
+        "Pour rencontrer le roi Louis XVI",
+      ],
+      correct: 2,
+      hint: "La Bastille était une prison qui servait aussi de réserve d'armes et de munitions.",
+    },
+    {
+      q: "Que demande le vicomte de Noailles à l'Assemblée, trois semaines après la prise de la Bastille ?",
+      choices: [
+        "L'augmentation des impôts sur le tiers état",
+        "Le retour du roi à Paris",
+        "La construction d'une nouvelle prison",
+        "L'abolition des privilèges",
+      ],
+      correct: 3,
+      hint: "De Noailles était lui-même un noble, mais il a proposé que tous les ordres soient égaux devant la loi.",
+    },
+    {
+      q: "Qui siégeait aux États généraux pour représenter le tiers état ?",
+      choices: [
+        "Le roi et ses ministres",
+        "Les évêques et les curés",
+        "Des représentants élus par le tiers état",
+        "Les généraux de l'armée",
+      ],
+      correct: 2,
+      hint: "Le tiers état désignait (élisait) des représentants pour porter ses idées aux États généraux.",
+    },
+  ];
+
+  let idx = 0, score = 0, answered = false;
+
+  const gameDiv     = document.getElementById('game');
+  const summaryDiv  = document.getElementById('summary');
+  const questionText= document.getElementById('questionText');
+  const choicesDiv  = document.getElementById('choices');
+  const hintBox     = document.getElementById('hintBox');
+  const btnNext     = document.getElementById('btnNext');
+  const progFill    = document.getElementById('progressFill');
+  const progText    = document.getElementById('progressText');
+  const starsDiv    = document.getElementById('stars');
+  const summaryTitle= document.getElementById('summaryTitle');
+  const summarySub  = document.getElementById('summarySub');
+
+  function showQuestion() {
+    answered = false;
+    const q = QUESTIONS[idx];
+
+    questionText.textContent = q.q;
+    hintBox.classList.remove('visible');
+    hintBox.textContent = '';
+    btnNext.classList.add('hidden');
+
+    progText.textContent = `${idx + 1} / ${QUESTIONS.length}`;
+    progFill.style.width = `${(idx / QUESTIONS.length) * 100}%`;
+
+    choicesDiv.innerHTML = '';
+    q.choices.forEach((text, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = text;
+      btn.addEventListener('click', () => answer(i));
+      choicesDiv.appendChild(btn);
+    });
+  }
+
+  function answer(chosen) {
+    if (answered) return;
+    answered = true;
+
+    const q = QUESTIONS[idx];
+    const btns = choicesDiv.querySelectorAll('.choice-btn');
+
+    btns.forEach(b => b.disabled = true);
+    btns[q.correct].classList.add('correct');
+
+    if (chosen === q.correct) {
+      score++;
+    } else {
+      btns[chosen].classList.add('wrong');
+    }
+
+    hintBox.textContent = (chosen === q.correct ? '✓ ' : '💡 ') + q.hint;
+    hintBox.classList.add('visible');
+
+    const isLast = idx === QUESTIONS.length - 1;
+    btnNext.textContent = isLast ? 'Voir mon score' : 'Question suivante →';
+    btnNext.classList.remove('hidden');
+  }
+
+  function nextQuestion() {
+    idx++;
+    if (idx >= QUESTIONS.length) {
+      showSummary();
+    } else {
+      showQuestion();
+    }
+  }
+
+  function showSummary() {
+    progFill.style.width = '100%';
+    gameDiv.style.display = 'none';
+    summaryDiv.classList.add('visible');
+
+    const total = QUESTIONS.length;
+    const pct   = score / total;
+
+    let icon, title, sub;
+    if (pct === 1)       { icon = '🎉🎉🎉'; title = 'Parfait !';          sub = `${score} / ${total} — Tu maîtrises la Révolution française !`; }
+    else if (pct >= 0.7) { icon = '⭐⭐⭐';  title = 'Très bien !';        sub = `${score} / ${total} — Encore un peu de révision et ce sera parfait.`; }
+    else if (pct >= 0.5) { icon = '⭐⭐';    title = 'Pas mal !';          sub = `${score} / ${total} — Relis le cours et réessaie.`; }
+    else                 { icon = '💪';     title = 'Continue comme ça !'; sub = `${score} / ${total} — Relis le cours et reviens, tu vas y arriver !`; }
+
+    starsDiv.textContent   = icon;
+    summaryTitle.textContent = title;
+    summarySub.textContent   = sub;
+  }
+
+  function restart() {
+    idx = 0; score = 0;
+    gameDiv.style.display = '';
+    summaryDiv.classList.remove('visible');
+    showQuestion();
+  }
+
+  btnNext.addEventListener('click', nextQuestion);
+  document.getElementById('btnRestart').addEventListener('click', restart);
+
+  showQuestion();
+</script>
+
+</body>
+</html>

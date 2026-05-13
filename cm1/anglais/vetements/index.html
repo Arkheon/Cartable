@@ -304,16 +304,16 @@
 
   function showCard() {
     flipped = false;
-    // Snap the card back to front instantly (no transition) before updating content,
-    // so the next card's answer is never visible during an outgoing animation.
+    // Disable transition and snap to front. Then force a synchronous reflow
+    // (offsetHeight read forces the browser to commit all pending style changes)
+    // so the reset is fully painted before we re-enable the flip transition.
+    // This prevents any content from the next card leaking through.
     card.style.transition = 'none';
     card.classList.remove('flipped');
     wordFront.textContent = deck[idx].fr;
     wordBack.textContent  = deck[idx].en;
-    // Re-enable the flip transition after the browser has applied the reset.
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      card.style.transition = '';
-    }));
+    void card.offsetHeight; // synchronous reflow
+    card.style.transition = '';
     actions.classList.add('hidden');
     progText.textContent = `${idx + 1} / ${deck.length}`;
     progFill.style.width = `${(idx / deck.length) * 100}%`;
