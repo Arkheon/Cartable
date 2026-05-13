@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Sons dans les mots — Français CP — Mon Cartable</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/css/shared.css">
+<style>
+  :root {
+    --subject:      #dc2626;
+    --subject-dark: #991b1b;
+  }
+
+  body  { display: flex; flex-direction: column; gap: 16px; }
+  #game { display: flex; flex-direction: column; gap: 16px; }
+
+  .topbar { display: flex; align-items: center; }
+  .progress-wrap { flex: 1; background: #e5e7eb; border-radius: 99px; height: 8px; overflow: hidden; margin: 0 12px; }
+  .progress-fill { background: var(--subject); height: 100%; border-radius: 99px; width: 0%; transition: width 0.4s ease; }
+  .progress-text { font-size: 15px; font-weight: 600; color: var(--muted); min-width: 48px; text-align: right; }
+
+  /* Carte son-cible */
+  .sound-card {
+    background: var(--subject);
+    box-shadow: 0 5px 0 var(--subject-dark);
+    border-radius: 24px;
+    padding: 28px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+  }
+
+  .sound-label {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(255,255,255,0.7);
+  }
+
+  .sound-target {
+    font-size: 72px;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+  }
+
+  .sound-hint {
+    font-size: 14px;
+    color: rgba(255,255,255,0.75);
+    margin-top: 2px;
+  }
+
+  /* Grille de choix */
+  .choices-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .choice-btn {
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 16px 8px;
+    font-family: 'Fredoka', sans-serif;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: border-color 0.15s, transform 0.1s;
+    min-height: 90px;
+    justify-content: center;
+  }
+  .choice-btn:active { transform: scale(0.97); }
+  .choice-btn[disabled] { cursor: default; }
+
+  .choice-emoji { font-size: 36px; line-height: 1; }
+  .choice-word  { font-size: 20px; font-weight: 700; color: var(--text); }
+
+  .choice-btn.correct {
+    background: #dcfce7;
+    border-color: #16a34a;
+  }
+  .choice-btn.correct .choice-word { color: #14532d; }
+
+  .choice-btn.wrong {
+    background: #fee2e2;
+    border-color: #dc2626;
+  }
+  .choice-btn.wrong .choice-word { color: #991b1b; }
+
+  /* Bouton suivant */
+  .btn-next {
+    background: var(--subject);
+    box-shadow: 0 4px 0 var(--subject-dark);
+    color: white; border: none; border-radius: 16px; padding: 18px;
+    font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700;
+    cursor: pointer; width: 100%; transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .btn-next:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--subject-dark); }
+  .btn-next.hidden { display: none; }
+
+  /* Résumé */
+  .summary { display: none; flex-direction: column; align-items: center; gap: 20px; text-align: center; padding: 24px 0; }
+  .summary.visible { display: flex; }
+  .summary-icon  { font-size: 72px; line-height: 1; }
+  .summary-title { font-size: 26px; font-weight: 700; color: var(--text); }
+  .summary-sub   { font-size: 16px; color: var(--muted); margin-top: -10px; }
+  .stars { display: flex; gap: 8px; font-size: 40px; }
+  .btn-restart   {
+    border: none; border-radius: 16px; padding: 18px;
+    font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700;
+    color: white; cursor: pointer; width: 100%;
+    background: var(--subject); box-shadow: 0 4px 0 var(--subject-dark);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .btn-restart:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--subject-dark); }
+
+  @media (min-width: 600px) {
+    .sound-target { font-size: 96px; }
+    .choice-emoji { font-size: 44px; }
+    .choice-word  { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="game">
+  <div class="topbar">
+    <a href="../index.html" class="back-link">← Retour</a>
+    <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="progress-text" id="progressText"></span>
+  </div>
+
+  <div class="sound-card">
+    <span class="sound-label">Trouve le mot avec le son</span>
+    <span class="sound-target"  id="soundTarget"></span>
+    <span class="sound-hint"    id="soundHint"></span>
+  </div>
+
+  <div class="choices-grid" id="choicesGrid"></div>
+
+  <button class="btn-next hidden" id="btnNext">Question suivante →</button>
+</div>
+
+<div class="summary" id="summary">
+  <div class="stars"         id="stars"></div>
+  <div class="summary-title" id="summaryTitle"></div>
+  <div class="summary-sub"   id="summarySub"></div>
+  <button class="btn-restart" id="btnRestart">Recommencer</button>
+</div>
+
+<script>
+  // Chaque son : label affiché, mot exemple d'aide, liste de mots + emoji
+  const SONS = [
+    {
+      son: '[a]', exemple: 'chat',
+      mots: [
+        { mot: 'chat',    emoji: '🐱' },
+        { mot: 'rat',     emoji: '🐭' },
+        { mot: 'canard',  emoji: '🦆' },
+        { mot: 'savon',   emoji: '🧼' },
+        { mot: 'vélo',    emoji: '🚲' },
+        { mot: 'citron',  emoji: '🍋' },
+        { mot: 'tigre',   emoji: '🐯' },
+        { mot: 'pomme',   emoji: '🍎' },
+      ],
+      correct: ['chat','rat','canard','savon'],
+    },
+    {
+      son: '[i]', exemple: 'lit',
+      mots: [
+        { mot: 'lit',     emoji: '🛏️' },
+        { mot: 'souris',  emoji: '🐭' },
+        { mot: 'girafe',  emoji: '🦒' },
+        { mot: 'pluie',   emoji: '🌧️' },
+        { mot: 'bateau',  emoji: '⛵' },
+        { mot: 'canard',  emoji: '🦆' },
+        { mot: 'nuage',   emoji: '☁️' },
+        { mot: 'robot',   emoji: '🤖' },
+      ],
+      correct: ['lit','souris','girafe','pluie'],
+    },
+    {
+      son: '[ou]', exemple: 'loup',
+      mots: [
+        { mot: 'loup',    emoji: '🐺' },
+        { mot: 'coucou',  emoji: '🐦' },
+        { mot: 'moufle',  emoji: '🧤' },
+        { mot: 'fourmi',  emoji: '🐜' },
+        { mot: 'ballon',  emoji: '🎈' },
+        { mot: 'citron',  emoji: '🍋' },
+        { mot: 'vélo',    emoji: '🚲' },
+        { mot: 'lapin',   emoji: '🐰' },
+      ],
+      correct: ['loup','coucou','moufle','fourmi'],
+    },
+    {
+      son: '[on]', exemple: 'lion',
+      mots: [
+        { mot: 'lion',    emoji: '🦁' },
+        { mot: 'ballon',  emoji: '🎈' },
+        { mot: 'bonbon',  emoji: '🍬' },
+        { mot: 'maison',  emoji: '🏠' },
+        { mot: 'vélo',    emoji: '🚲' },
+        { mot: 'lapin',   emoji: '🐰' },
+        { mot: 'soleil',  emoji: '☀️' },
+        { mot: 'fusée',   emoji: '🚀' },
+      ],
+      correct: ['lion','ballon','bonbon','maison'],
+    },
+    {
+      son: '[an]', exemple: 'vent',
+      mots: [
+        { mot: 'vent',    emoji: '💨' },
+        { mot: 'enfant',  emoji: '👦' },
+        { mot: 'volcan',  emoji: '🌋' },
+        { mot: 'maman',   emoji: '👩' },
+        { mot: 'fusée',   emoji: '🚀' },
+        { mot: 'robot',   emoji: '🤖' },
+        { mot: 'tigre',   emoji: '🐯' },
+        { mot: 'soleil',  emoji: '☀️' },
+      ],
+      correct: ['vent','enfant','volcan','maman'],
+    },
+    {
+      son: '[in]', exemple: 'lapin',
+      mots: [
+        { mot: 'lapin',   emoji: '🐰' },
+        { mot: 'requin',  emoji: '🦈' },
+        { mot: 'poussin', emoji: '🐣' },
+        { mot: 'pain',    emoji: '🍞' },
+        { mot: 'canard',  emoji: '🦆' },
+        { mot: 'bateau',  emoji: '⛵' },
+        { mot: 'pomme',   emoji: '🍎' },
+        { mot: 'voiture', emoji: '🚗' },
+      ],
+      correct: ['lapin','requin','poussin','pain'],
+    },
+    {
+      son: '[oi]', exemple: 'toi',
+      mots: [
+        { mot: 'bois',    emoji: '🪵' },
+        { mot: 'voiture', emoji: '🚗' },
+        { mot: 'doigt',   emoji: '👆' },
+        { mot: 'noix',    emoji: '🥜' },
+        { mot: 'maison',  emoji: '🏠' },
+        { mot: 'ballon',  emoji: '🎈' },
+        { mot: 'soleil',  emoji: '☀️' },
+        { mot: 'lapin',   emoji: '🐰' },
+      ],
+      correct: ['bois','voiture','doigt','noix'],
+    },
+    {
+      son: '[é]', exemple: 'été',
+      mots: [
+        { mot: 'vélo',    emoji: '🚲' },
+        { mot: 'bébé',    emoji: '👶' },
+        { mot: 'télé',    emoji: '📺' },
+        { mot: 'fusée',   emoji: '🚀' },
+        { mot: 'ballon',  emoji: '🎈' },
+        { mot: 'lion',    emoji: '🦁' },
+        { mot: 'robot',   emoji: '🤖' },
+        { mot: 'fourmi',  emoji: '🐜' },
+      ],
+      correct: ['vélo','bébé','télé','fusée'],
+    },
+    {
+      son: '[ch]', exemple: 'chat',
+      mots: [
+        { mot: 'chat',      emoji: '🐱' },
+        { mot: 'cheval',    emoji: '🐴' },
+        { mot: 'chapeau',   emoji: '🎩' },
+        { mot: 'mouche',    emoji: '🪰' },
+        { mot: 'lapin',     emoji: '🐰' },
+        { mot: 'ballon',    emoji: '🎈' },
+        { mot: 'soleil',    emoji: '☀️' },
+        { mot: 'canard',    emoji: '🦆' },
+      ],
+      correct: ['chat','cheval','chapeau','mouche'],
+    },
+    {
+      son: '[f]', exemple: 'feu',
+      mots: [
+        { mot: 'feu',     emoji: '🔥' },
+        { mot: 'phoque',  emoji: '🦭' },
+        { mot: 'fusée',   emoji: '🚀' },
+        { mot: 'dauphin', emoji: '🐬' },
+        { mot: 'ballon',  emoji: '🎈' },
+        { mot: 'robot',   emoji: '🤖' },
+        { mot: 'tigre',   emoji: '🐯' },
+        { mot: 'maison',  emoji: '🏠' },
+      ],
+      correct: ['feu','phoque','fusée','dauphin'],
+    },
+  ];
+
+  const TOTAL = 10; // une question par son
+
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length-1; i > 0; i--) {
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+  }
+
+  function buildDeck() {
+    const deck = [];
+    const sonList = shuffle([...SONS]);
+    sonList.forEach(s => {
+      // Choisir 1 mot correct + 3 distracteurs parmi les mots sans ce son
+      const correctPool   = shuffle(s.mots.filter(m => s.correct.includes(m.mot)));
+      const distractorPool= shuffle(s.mots.filter(m => !s.correct.includes(m.mot)));
+      const correctItem   = correctPool[0];
+      const distractors   = distractorPool.slice(0, 3);
+      const choices       = shuffle([correctItem, ...distractors]);
+      deck.push({
+        son:     s.son,
+        exemple: s.exemple,
+        choices,
+        correctMot: correctItem.mot,
+      });
+    });
+    return deck;
+  }
+
+  let questions = buildDeck(), idx = 0, score = 0, answered = false;
+
+  const soundTarget = document.getElementById('soundTarget');
+  const soundHint   = document.getElementById('soundHint');
+  const choicesGrid = document.getElementById('choicesGrid');
+  const progFill    = document.getElementById('progressFill');
+  const progText    = document.getElementById('progressText');
+  const btnNext     = document.getElementById('btnNext');
+  const gameDiv     = document.getElementById('game');
+  const summaryDiv  = document.getElementById('summary');
+  const starsDiv    = document.getElementById('stars');
+  const summaryTitle= document.getElementById('summaryTitle');
+  const summarySub  = document.getElementById('summarySub');
+
+  function showQuestion() {
+    answered = false;
+    btnNext.classList.add('hidden');
+    const q = questions[idx];
+
+    soundTarget.textContent = q.son;
+    soundHint.textContent   = `ex : ${q.exemple}`;
+    progText.textContent    = `${idx + 1} / ${TOTAL}`;
+    progFill.style.width    = `${(idx / TOTAL) * 100}%`;
+
+    choicesGrid.innerHTML = '';
+    q.choices.forEach(item => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.innerHTML = `<span class="choice-emoji">${item.emoji}</span><span class="choice-word">${item.mot}</span>`;
+      btn.addEventListener('click', () => answer(item.mot === q.correctMot, btn, q.correctMot));
+      choicesGrid.appendChild(btn);
+    });
+  }
+
+  function answer(isCorrect, btn, correctMot) {
+    if (answered) return;
+    answered = true;
+
+    choicesGrid.querySelectorAll('.choice-btn').forEach(b => {
+      b.disabled = true;
+      if (b.querySelector('.choice-word').textContent === correctMot) b.classList.add('correct');
+    });
+    if (!isCorrect) btn.classList.add('wrong');
+    else score++;
+
+    const isLast = idx === TOTAL - 1;
+    btnNext.textContent = isLast ? 'Voir mon score' : 'Question suivante →';
+    btnNext.classList.remove('hidden');
+  }
+
+  btnNext.addEventListener('click', () => {
+    idx++;
+    if (idx >= TOTAL) showSummary(); else showQuestion();
+  });
+
+  function showSummary() {
+    progFill.style.width = '100%';
+    gameDiv.style.display = 'none';
+    summaryDiv.classList.add('visible');
+
+    const pct = score / TOTAL;
+    let icon, title, sub;
+    if (pct === 1)       { icon = '🎉'; title = 'Parfait !';          sub = `${score} / ${TOTAL} — Tu reconnais tous les sons !`; }
+    else if (pct >= 0.7) { icon = '⭐⭐⭐'; title = 'Très bien !';    sub = `${score} / ${TOTAL} — Encore un peu de travail !`; }
+    else if (pct >= 0.5) { icon = '⭐⭐'; title = 'Pas mal !';        sub = `${score} / ${TOTAL} — Continue à t'entraîner.`; }
+    else                 { icon = '💪';  title = 'Continue !';        sub = `${score} / ${TOTAL} — Réécoute les sons et réessaie !`; }
+
+    starsDiv.textContent    = icon;
+    summaryTitle.textContent = title;
+    summarySub.textContent   = sub;
+  }
+
+  document.getElementById('btnRestart').addEventListener('click', () => {
+    questions = buildDeck(); idx = 0; score = 0;
+    gameDiv.style.display = '';
+    summaryDiv.classList.remove('visible');
+    showQuestion();
+  });
+
+  showQuestion();
+</script>
+
+</body>
+</html>

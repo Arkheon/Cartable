@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mots à déchiffrer — Français CP — Mon Cartable</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/css/shared.css">
+<style>
+  :root {
+    --subject:      #dc2626;
+    --subject-dark: #991b1b;
+  }
+
+  body  { display: flex; flex-direction: column; gap: 16px; }
+  #game { display: flex; flex-direction: column; gap: 16px; }
+
+  .topbar { display: flex; align-items: center; }
+  .progress-wrap { flex: 1; background: #e5e7eb; border-radius: 99px; height: 8px; overflow: hidden; margin: 0 12px; }
+  .progress-fill { background: var(--subject); height: 100%; border-radius: 99px; width: 0%; transition: width 0.4s ease; }
+  .progress-text { font-size: 15px; font-weight: 600; color: var(--muted); min-width: 48px; text-align: right; }
+
+  /* Carte flip 3D */
+  .card-scene { perspective: 1000px; }
+
+  .card-3d {
+    position: relative;
+    height: 260px;
+    transform-style: preserve-3d;
+    transition: transform 0.45s cubic-bezier(0.4, 0.2, 0.2, 1);
+    cursor: pointer;
+  }
+  .card-3d.flipped { transform: rotateY(180deg); }
+
+  .card-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 28px 24px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    user-select: none;
+  }
+
+  .card-front {
+    background: white;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    border: 3px solid #fecaca;
+  }
+
+  .card-back {
+    background: var(--subject);
+    box-shadow: 0 5px 0 var(--subject-dark);
+    transform: rotateY(180deg);
+  }
+
+  .card-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .card-front .card-label { color: var(--muted); }
+  .card-back  .card-label { color: rgba(255,255,255,0.65); }
+
+  /* Mot entier (recto) */
+  .card-word {
+    font-size: 52px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.1;
+  }
+  .card-front .card-word { color: var(--text); }
+  .card-back  .card-word { color: white; }
+
+  /* Décomposition en syllabes (verso) */
+  .card-syllables {
+    font-size: 42px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.2;
+    color: white;
+    letter-spacing: 2px;
+  }
+
+  .card-emoji {
+    font-size: 56px;
+    line-height: 1;
+  }
+
+  .card-tap-hint { font-size: 13px; color: #d1d5db; margin-top: 4px; }
+
+  /* Boutons */
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    opacity: 1;
+    transition: opacity 0.2s;
+  }
+  .actions.hidden { opacity: 0; pointer-events: none; }
+
+  .btn-action {
+    border: none;
+    border-radius: 16px;
+    padding: 18px 8px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .btn-action:active { transform: translateY(3px); }
+  .btn-review { background: #d97706; box-shadow: 0 4px 0 #92400e; }
+  .btn-review:active { box-shadow: 0 1px 0 #92400e; }
+  .btn-know   { background: var(--subject); box-shadow: 0 4px 0 var(--subject-dark); }
+  .btn-know:active { box-shadow: 0 1px 0 var(--subject-dark); }
+
+  /* Résumé */
+  .summary { display: none; flex-direction: column; align-items: center; gap: 20px; text-align: center; padding: 24px 0; }
+  .summary.visible { display: flex; }
+  .summary-icon  { font-size: 72px; line-height: 1; }
+  .summary-title { font-size: 26px; font-weight: 700; color: var(--text); }
+  .summary-sub   { font-size: 16px; color: var(--muted); margin-top: -10px; }
+  .summary-btns  { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+
+  .btn-restart {
+    border: none; border-radius: 16px; padding: 18px;
+    font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700;
+    color: white; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .btn-restart:active { transform: translateY(3px); }
+  .btn-all    { background: var(--subject); box-shadow: 0 4px 0 var(--subject-dark); }
+  .btn-all:active { box-shadow: 0 1px 0 var(--subject-dark); }
+  .btn-missed { background: #d97706; box-shadow: 0 4px 0 #92400e; }
+  .btn-missed:active { box-shadow: 0 1px 0 #92400e; }
+
+  @media (min-width: 600px) {
+    .card-3d { height: 300px; }
+    .card-word { font-size: 64px; }
+    .summary-btns { flex-direction: row; }
+  }
+</style>
+</head>
+<body>
+
+<div id="game">
+  <div class="topbar">
+    <a href="../index.html" class="back-link">← Retour</a>
+    <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="progress-text" id="progressText"></span>
+  </div>
+
+  <div class="card-scene">
+    <div class="card-3d" id="card" role="button" tabindex="0" aria-label="Retourner la carte">
+      <div class="card-face card-front">
+        <span class="card-label">Lis ce mot</span>
+        <span class="card-word" id="wordFront"></span>
+        <span class="card-tap-hint">Touche pour voir la décomposition</span>
+      </div>
+      <div class="card-face card-back">
+        <span class="card-label">Syllabes</span>
+        <span class="card-syllables" id="wordSyllables"></span>
+        <span class="card-emoji"     id="wordEmoji"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions hidden" id="actions">
+    <button class="btn-action btn-review" id="btnReview">↩ À revoir</button>
+    <button class="btn-action btn-know"   id="btnKnow"  >✓ Je sais !</button>
+  </div>
+</div>
+
+<div class="summary" id="summary">
+  <div class="summary-icon"  id="summaryIcon"></div>
+  <div class="summary-title" id="summaryTitle"></div>
+  <div class="summary-sub"   id="summarySub"></div>
+  <div class="summary-btns">
+    <button class="btn-restart btn-all"    id="btnAll">Recommencer tout</button>
+    <button class="btn-restart btn-missed" id="btnMissed" style="display:none"></button>
+  </div>
+</div>
+
+<script>
+  // mot, décomposition avec · entre syllabes, emoji
+  const MOTS = [
+    { mot: 'bateau',    syllabes: 'ba·teau',    emoji: '⛵' },
+    { mot: 'lapin',     syllabes: 'la·pin',     emoji: '🐰' },
+    { mot: 'maison',    syllabes: 'mai·son',    emoji: '🏠' },
+    { mot: 'soleil',    syllabes: 'so·leil',    emoji: '☀️' },
+    { mot: 'pomme',     syllabes: 'pom·me',     emoji: '🍎' },
+    { mot: 'vélo',      syllabes: 've·lo',      emoji: '🚲' },
+    { mot: 'canard',    syllabes: 'ca·nard',    emoji: '🦆' },
+    { mot: 'chapeau',   syllabes: 'cha·peau',   emoji: '🎩' },
+    { mot: 'tomate',    syllabes: 'to·ma·te',   emoji: '🍅' },
+    { mot: 'moto',      syllabes: 'mo·to',      emoji: '🏍️' },
+    { mot: 'piano',     syllabes: 'pia·no',     emoji: '🎹' },
+    { mot: 'nuage',     syllabes: 'nu·a·ge',    emoji: '☁️' },
+    { mot: 'tigre',     syllabes: 'ti·gre',     emoji: '🐯' },
+    { mot: 'girafe',    syllabes: 'gi·ra·fe',   emoji: '🦒' },
+    { mot: 'citron',    syllabes: 'ci·tron',    emoji: '🍋' },
+    { mot: 'fusée',     syllabes: 'fu·sée',     emoji: '🚀' },
+    { mot: 'ballon',    syllabes: 'bal·lon',    emoji: '🎈' },
+    { mot: 'requin',    syllabes: 're·quin',    emoji: '🦈' },
+    { mot: 'robot',     syllabes: 'ro·bot',     emoji: '🤖' },
+    { mot: 'tulipe',    syllabes: 'tu·li·pe',   emoji: '🌷' },
+    { mot: 'escargot',  syllabes: 'es·car·got', emoji: '🐌' },
+    { mot: 'biberon',   syllabes: 'bi·be·ron',  emoji: '🍼' },
+    { mot: 'dinosaure', syllabes: 'di·no·sau·re', emoji: '🦕' },
+    { mot: 'coccinelle', syllabes: 'coc·ci·nel·le', emoji: '🐞' },
+    { mot: 'fourmi',    syllabes: 'four·mi',    emoji: '🐜' },
+    { mot: 'lumière',   syllabes: 'lu·miè·re',  emoji: '💡' },
+    { mot: 'fenêtre',   syllabes: 'fe·nê·tre',  emoji: '🪟' },
+    { mot: 'bougie',    syllabes: 'bou·gie',    emoji: '🕯️' },
+    { mot: 'drapeau',   syllabes: 'dra·peau',   emoji: '🚩' },
+    { mot: 'papillon',  syllabes: 'pa·pil·lon', emoji: '🦋' },
+  ];
+
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length-1; i > 0; i--) {
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+  }
+
+  let deck = [], missed = [], idx = 0, known = 0, flipped = false;
+
+  const card         = document.getElementById('card');
+  const wordFront    = document.getElementById('wordFront');
+  const wordSyllables= document.getElementById('wordSyllables');
+  const wordEmoji    = document.getElementById('wordEmoji');
+  const actions      = document.getElementById('actions');
+  const progFill     = document.getElementById('progressFill');
+  const progText     = document.getElementById('progressText');
+  const gameDiv      = document.getElementById('game');
+  const summaryDiv   = document.getElementById('summary');
+  const summaryIcon  = document.getElementById('summaryIcon');
+  const summaryTitle = document.getElementById('summaryTitle');
+  const summarySub   = document.getElementById('summarySub');
+  const btnAll       = document.getElementById('btnAll');
+  const btnMissed    = document.getElementById('btnMissed');
+
+  function startGame(cards) {
+    deck = shuffle(cards);
+    missed = []; idx = 0; known = 0;
+    gameDiv.style.display = '';
+    summaryDiv.classList.remove('visible');
+    showCard();
+  }
+
+  function showCard() {
+    flipped = false;
+    card.style.transition = 'none';
+    card.classList.remove('flipped');
+    wordFront.textContent     = deck[idx].mot;
+    wordSyllables.textContent = deck[idx].syllabes;
+    wordEmoji.textContent     = deck[idx].emoji;
+    void card.offsetHeight;
+    card.style.transition = '';
+    actions.classList.add('hidden');
+    progText.textContent = `${idx + 1} / ${deck.length}`;
+    progFill.style.width = `${(idx / deck.length) * 100}%`;
+  }
+
+  function flip() {
+    if (flipped) return;
+    flipped = true;
+    card.classList.add('flipped');
+    actions.classList.remove('hidden');
+  }
+
+  function next(markKnown) {
+    if (markKnown) known++; else missed.push(deck[idx]);
+    idx++;
+    if (idx >= deck.length) showSummary(); else showCard();
+  }
+
+  function showSummary() {
+    progFill.style.width = '100%';
+    gameDiv.style.display = 'none';
+    summaryDiv.classList.add('visible');
+
+    const total = deck.length;
+    if (known === total) {
+      summaryIcon.textContent  = '🎉';
+      summaryTitle.textContent = 'Parfait !';
+      summarySub.textContent   = `Tu as déchiffré les ${total} mots !`;
+    } else {
+      summaryIcon.textContent  = known >= total / 2 ? '👍' : '💪';
+      summaryTitle.textContent = `${known} / ${total} mots lus`;
+      summarySub.textContent   = `${missed.length} mot${missed.length > 1 ? 's' : ''} à revoir.`;
+    }
+
+    if (missed.length > 0) {
+      btnMissed.style.display = '';
+      btnMissed.textContent   = `Réviser les ${missed.length} mot${missed.length > 1 ? 's' : ''}`;
+    } else {
+      btnMissed.style.display = 'none';
+    }
+  }
+
+  card.addEventListener('click', flip);
+  card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') flip(); });
+  document.getElementById('btnReview').addEventListener('click', () => next(false));
+  document.getElementById('btnKnow'  ).addEventListener('click', () => next(true));
+  btnAll.addEventListener('click',    () => startGame(MOTS));
+  btnMissed.addEventListener('click', () => startGame(missed));
+
+  startGame(MOTS);
+</script>
+
+</body>
+</html>

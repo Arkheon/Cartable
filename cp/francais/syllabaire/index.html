@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Syllabaire — Français CP — Mon Cartable</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../assets/css/shared.css">
+<style>
+  :root {
+    --subject:      #dc2626;
+    --subject-dark: #991b1b;
+  }
+
+  body  { display: flex; flex-direction: column; gap: 16px; }
+
+  /* ── Setup ── */
+  #setup { display: flex; flex-direction: column; gap: 20px; }
+
+  .setup-card {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  }
+
+  .setup-card h2 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  .level-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .level-btn {
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 14px 16px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .level-btn .check { font-size: 20px; opacity: 0; transition: opacity 0.15s; }
+  .level-btn.active { border-color: var(--subject); background: #fff1f2; }
+  .level-btn.active .check { opacity: 1; }
+
+  .btn-start {
+    background: var(--subject);
+    box-shadow: 0 4px 0 var(--subject-dark);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 20px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    width: 100%;
+  }
+  .btn-start:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--subject-dark); }
+  .btn-start:disabled { background: #e5e7eb; box-shadow: 0 4px 0 #d1d5db; color: #9ca3af; cursor: default; transform: none; }
+
+  /* ── Game ── */
+  #game { display: flex; flex-direction: column; gap: 16px; display: none; }
+
+  .topbar { display: flex; align-items: center; }
+  .progress-wrap { flex: 1; background: #e5e7eb; border-radius: 99px; height: 8px; overflow: hidden; margin: 0 12px; }
+  .progress-fill { background: var(--subject); height: 100%; border-radius: 99px; width: 0%; transition: width 0.4s ease; }
+  .progress-text { font-size: 15px; font-weight: 600; color: var(--muted); min-width: 48px; text-align: right; }
+
+  /* Carte syllabe */
+  .syl-card {
+    background: white;
+    border-radius: 24px;
+    border: 3px solid #fecaca;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 32px 24px;
+    user-select: none;
+  }
+
+  .syl-hint {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .syl-text {
+    font-size: 80px;
+    font-weight: 700;
+    color: var(--subject);
+    line-height: 1;
+    text-align: center;
+  }
+
+  .syl-tap {
+    font-size: 13px;
+    color: #d1d5db;
+    margin-top: 4px;
+  }
+
+  /* Boutons réponse */
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .btn-action {
+    border: none;
+    border-radius: 16px;
+    padding: 18px 8px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .btn-action:active { transform: translateY(3px); }
+
+  .btn-review { background: #d97706; box-shadow: 0 4px 0 #92400e; }
+  .btn-review:active { box-shadow: 0 1px 0 #92400e; }
+  .btn-know   { background: var(--subject); box-shadow: 0 4px 0 var(--subject-dark); }
+  .btn-know:active { box-shadow: 0 1px 0 var(--subject-dark); }
+
+  /* ── Résumé ── */
+  .summary {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    text-align: center;
+    padding: 24px 0;
+  }
+  .summary.visible { display: flex; }
+  .summary-icon  { font-size: 72px; line-height: 1; }
+  .summary-title { font-size: 26px; font-weight: 700; color: var(--text); }
+  .summary-sub   { font-size: 16px; color: var(--muted); margin-top: -10px; }
+  .summary-btns  { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+
+  .btn-restart {
+    border: none;
+    border-radius: 16px;
+    padding: 18px;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .btn-restart:active { transform: translateY(3px); }
+  .btn-all    { background: var(--subject); box-shadow: 0 4px 0 var(--subject-dark); }
+  .btn-all:active { box-shadow: 0 1px 0 var(--subject-dark); }
+  .btn-missed { background: #d97706; box-shadow: 0 4px 0 #92400e; }
+  .btn-missed:active { box-shadow: 0 1px 0 #92400e; }
+
+  @media (min-width: 600px) {
+    .syl-text { font-size: 110px; }
+    .summary-btns { flex-direction: row; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Setup ── -->
+<div id="setup">
+  <a href="../index.html" class="back-link">← Retour</a>
+
+  <div class="page-header">
+    <h1>Syllabaire</h1>
+    <p>Choisis les niveaux à réviser</p>
+  </div>
+
+  <div class="setup-card">
+    <h2>Niveaux</h2>
+    <div class="level-grid" id="levelGrid">
+      <button class="level-btn" data-level="1">
+        <span class="check">✓</span>
+        Niveau 1 — Syllabes simples
+        <span style="font-size:13px;color:var(--muted);margin-left:auto">ma, ri, fo…</span>
+      </button>
+      <button class="level-btn" data-level="2">
+        <span class="check">✓</span>
+        Niveau 2 — Sons composés
+        <span style="font-size:13px;color:var(--muted);margin-left:auto">ou, an, on…</span>
+      </button>
+      <button class="level-btn" data-level="3">
+        <span class="check">✓</span>
+        Niveau 3 — Groupes consonantiques
+        <span style="font-size:13px;color:var(--muted);margin-left:auto">bra, clo, tri…</span>
+      </button>
+    </div>
+  </div>
+
+  <button class="btn-start" id="btnStart" disabled>Commencer</button>
+</div>
+
+<!-- ── Jeu ── -->
+<div id="game">
+  <div class="topbar">
+    <a href="../index.html" class="back-link">← Retour</a>
+    <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="progress-text" id="progressText"></span>
+  </div>
+
+  <div class="syl-card">
+    <span class="syl-hint">Lis cette syllabe</span>
+    <span class="syl-text" id="sylText"></span>
+    <span class="syl-tap">Lis à voix haute, puis valide</span>
+  </div>
+
+  <div class="actions">
+    <button class="btn-action btn-review" id="btnReview">↩ À revoir</button>
+    <button class="btn-action btn-know"   id="btnKnow"  >✓ Lu !</button>
+  </div>
+</div>
+
+<!-- ── Résumé ── -->
+<div class="summary" id="summary">
+  <div class="summary-icon"  id="summaryIcon"></div>
+  <div class="summary-title" id="summaryTitle"></div>
+  <div class="summary-sub"   id="summarySub"></div>
+  <div class="summary-btns">
+    <button class="btn-restart btn-all"    id="btnAll">Recommencer tout</button>
+    <button class="btn-restart btn-missed" id="btnMissed" style="display:none"></button>
+  </div>
+</div>
+
+<script>
+  const SYLLABLES = {
+    1: [
+      'ma','me','mi','mo','mu','my',
+      'pa','pe','pi','po','pu',
+      'ra','re','ri','ro','ru',
+      'la','le','li','lo','lu',
+      'sa','se','si','so','su',
+      'ta','te','ti','to','tu',
+      'na','ne','ni','no','nu',
+      'fa','fe','fi','fo','fu',
+      'da','de','di','do','du',
+      'ba','be','bi','bo','bu',
+      'va','ve','vi','vo','vu',
+      'ca','co','cu','ka','ke','ki',
+      'ga','ge','gi','go','gu',
+      'ja','je','ji','jo','ju',
+    ],
+    2: [
+      'ou','oi','au','eau','eu',
+      'an','en','in','on','un',
+      'ai','ei','oe',
+      'mou','pou','lou','sou','dou',
+      'man','van','ban','pan','ran',
+      'min','pin','lin','fin','vin',
+      'mon','bon','son','ton','ron',
+      'boi','foi','loi','moi','toi',
+      'mai','pai','lai','dai','rai',
+    ],
+    3: [
+      'bra','bre','bri','bro','bru',
+      'cra','cre','cri','cro','cru',
+      'fra','fre','fri','fro','fru',
+      'gra','gre','gri','gro','gru',
+      'pra','pre','pri','pro','pru',
+      'tra','tre','tri','tro','tru',
+      'vra','vre','vri','vro',
+      'cla','cle','cli','clo','clu',
+      'fla','fle','fli','flo','flu',
+      'gla','gle','gli','glo',
+      'pla','ple','pli','plo','plu',
+      'bla','ble','bli','blo','blu',
+    ],
+  };
+
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length-1; i > 0; i--) {
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+  }
+
+  // ── Setup
+  const levelGrid  = document.getElementById('levelGrid');
+  const btnStart   = document.getElementById('btnStart');
+  const setupDiv   = document.getElementById('setup');
+  const gameDiv    = document.getElementById('game');
+  const summaryDiv = document.getElementById('summary');
+
+  let activeLevels = new Set();
+
+  levelGrid.querySelectorAll('.level-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lv = +btn.dataset.level;
+      if (activeLevels.has(lv)) { activeLevels.delete(lv); btn.classList.remove('active'); }
+      else                      { activeLevels.add(lv);    btn.classList.add('active'); }
+      btnStart.disabled = activeLevels.size === 0;
+    });
+  });
+
+  btnStart.addEventListener('click', () => {
+    const pool = [];
+    activeLevels.forEach(lv => pool.push(...SYLLABLES[lv]));
+    startGame(pool);
+  });
+
+  // ── Game
+  const sylText    = document.getElementById('sylText');
+  const progFill   = document.getElementById('progressFill');
+  const progText   = document.getElementById('progressText');
+  const summaryIcon  = document.getElementById('summaryIcon');
+  const summaryTitle = document.getElementById('summaryTitle');
+  const summarySub   = document.getElementById('summarySub');
+  const btnAll       = document.getElementById('btnAll');
+  const btnMissed    = document.getElementById('btnMissed');
+
+  let deck = [], missed = [], idx = 0, known = 0;
+
+  function startGame(cards) {
+    deck = shuffle(cards);
+    missed = []; idx = 0; known = 0;
+    setupDiv.style.display = 'none';
+    gameDiv.style.display = 'flex';
+    summaryDiv.classList.remove('visible');
+    showCard();
+  }
+
+  function showCard() {
+    sylText.textContent = deck[idx];
+    progText.textContent = `${idx + 1} / ${deck.length}`;
+    progFill.style.width = `${(idx / deck.length) * 100}%`;
+  }
+
+  function next(markKnown) {
+    if (markKnown) known++; else missed.push(deck[idx]);
+    idx++;
+    if (idx >= deck.length) showSummary(); else showCard();
+  }
+
+  function showSummary() {
+    progFill.style.width = '100%';
+    gameDiv.style.display = 'none';
+    summaryDiv.classList.add('visible');
+
+    const total = deck.length;
+    if (known === total) {
+      summaryIcon.textContent  = '🎉';
+      summaryTitle.textContent = 'Parfait !';
+      summarySub.textContent   = `Tu as lu les ${total} syllabes !`;
+    } else {
+      summaryIcon.textContent  = known >= total / 2 ? '👍' : '💪';
+      summaryTitle.textContent = `${known} / ${total} syllabes lues`;
+      summarySub.textContent   = `${missed.length} syllabe${missed.length > 1 ? 's' : ''} à revoir.`;
+    }
+
+    if (missed.length > 0) {
+      btnMissed.style.display = '';
+      btnMissed.textContent   = `Réviser les ${missed.length} syllabe${missed.length > 1 ? 's' : ''}`;
+    } else {
+      btnMissed.style.display = 'none';
+    }
+  }
+
+  document.getElementById('btnReview').addEventListener('click', () => next(false));
+  document.getElementById('btnKnow'  ).addEventListener('click', () => next(true));
+  btnAll.addEventListener('click', () => {
+    summaryDiv.classList.remove('visible');
+    const pool = [];
+    activeLevels.forEach(lv => pool.push(...SYLLABLES[lv]));
+    startGame(pool);
+  });
+  btnMissed.addEventListener('click', () => startGame(missed));
+</script>
+
+</body>
+</html>
